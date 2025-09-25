@@ -6,6 +6,7 @@
 /public/storage
 /public/themes
 /storage/*.key
+/database/data/*.csv
 /vendor
 .env
 .env.backup
