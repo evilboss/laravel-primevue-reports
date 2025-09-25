@@ -1,10 +1,7 @@
 <script setup>
-import GuestLayout from '@/Layouts/GuestLayout.vue';
-import InputError from '@/Components/InputError.vue';
-import InputLabel from '@/Components/InputLabel.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
-import TextInput from '@/Components/TextInput.vue';
-import { Head, useForm } from '@inertiajs/vue3';
+import { useTemplateRef, onMounted } from 'vue';
+import { useForm } from '@inertiajs/vue3';
+import GuestAuthLayout from '@/layouts/GuestAuthLayout.vue';
 
 defineProps({
     status: {
@@ -12,57 +9,95 @@ defineProps({
     },
 });
 
-const form = useForm({
+const emailInput = useTemplateRef('email-input');
+
+const forgotPasswordForm = useForm({
     email: '',
 });
 
 const submit = () => {
-    form.post(route('password.email'));
+    forgotPasswordForm.post(route('password.email'));
 };
+
+onMounted(() => {
+    emailInput.value.$el.focus();
+});
 </script>
 
 <template>
-    <GuestLayout>
-        <Head title="Forgot Password" />
+    <GuestAuthLayout>
+        <InertiaHead title="Forgot password" />
 
-        <div class="mb-4 text-sm text-gray-600">
-            Forgot your password? No problem. Just let us know your email
-            address and we will email you a password reset link that will allow
-            you to choose a new one.
-        </div>
-
-        <div
+        <template
             v-if="status"
-            class="mb-4 text-sm font-medium text-green-600"
+            #message
         >
-            {{ status }}
-        </div>
+            <Message
+                severity="success"
+                :closable="false"
+                class="shadow-sm"
+            >
+                {{ status }}
+            </Message>
+        </template>
 
-        <form @submit.prevent="submit">
-            <div>
-                <InputLabel for="email" value="Email" />
+        <template #title>
+            <div class="text-center">
+                Forgot password
+            </div>
+        </template>
 
-                <TextInput
+        <template #subtitle>
+            <div class="text-center">
+                Enter your email address to receive a password reset link
+            </div>
+        </template>
+
+        <form
+            class="space-y-6 sm:space-y-8"
+            @submit.prevent="submit"
+        >
+            <div class="flex flex-col gap-2">
+                <label for="email">Email address</label>
+                <InputText
                     id="email"
+                    ref="email-input"
+                    v-model="forgotPasswordForm.email"
+                    :invalid="Boolean(forgotPasswordForm.errors?.email)"
                     type="email"
-                    class="mt-1 block w-full"
-                    v-model="form.email"
-                    required
-                    autofocus
                     autocomplete="username"
+                    required
+                    fluid
                 />
-
-                <InputError class="mt-2" :message="form.errors.email" />
+                <Message
+                    v-if="forgotPasswordForm.errors?.email"
+                    severity="error"
+                    variant="simple"
+                    size="small"
+                >
+                    {{ forgotPasswordForm.errors?.email }}
+                </Message>
             </div>
 
-            <div class="mt-4 flex items-center justify-end">
-                <PrimaryButton
-                    :class="{ 'opacity-25': form.processing }"
-                    :disabled="form.processing"
-                >
-                    Email Password Reset Link
-                </PrimaryButton>
+            <div>
+                <Button
+                    :loading="forgotPasswordForm.processing"
+                    type="submit"
+                    label="Email password reset link"
+                    fluid
+                />
+            </div>
+
+            <div class="text-center">
+                <span class="text-muted-color mr-1">Or, return to</span>
+                <InertiaLink :href="route('login')">
+                    <Button
+                        class="p-0"
+                        variant="link"
+                        label="log in"
+                    />
+                </InertiaLink>
             </div>
         </form>
-    </GuestLayout>
+    </GuestAuthLayout>
 </template>

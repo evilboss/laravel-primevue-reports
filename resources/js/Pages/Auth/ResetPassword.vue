@@ -1,10 +1,7 @@
 <script setup>
-import GuestLayout from '@/Layouts/GuestLayout.vue';
-import InputError from '@/Components/InputError.vue';
-import InputLabel from '@/Components/InputLabel.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
-import TextInput from '@/Components/TextInput.vue';
-import { Head, useForm } from '@inertiajs/vue3';
+import { useTemplateRef, onMounted } from 'vue';
+import { useForm } from '@inertiajs/vue3';
+import GuestAuthLayout from '@/layouts/GuestAuthLayout.vue';
 
 const props = defineProps({
     email: {
@@ -17,7 +14,9 @@ const props = defineProps({
     },
 });
 
-const form = useForm({
+const emailInput = useTemplateRef('email-input');
+
+const resetPwForm = useForm({
     token: props.token,
     email: props.email,
     password: '',
@@ -25,77 +24,109 @@ const form = useForm({
 });
 
 const submit = () => {
-    form.post(route('password.store'), {
-        onFinish: () => form.reset('password', 'password_confirmation'),
+    resetPwForm.post(route('password.store'), {
+        onFinish: () => resetPwForm.reset('password', 'password_confirmation'),
     });
 };
+
+onMounted(() => {
+    emailInput.value.$el.focus();
+});
 </script>
 
 <template>
-    <GuestLayout>
-        <Head title="Reset Password" />
+    <GuestAuthLayout>
+        <InertiaHead title="Reset password" />
 
-        <form @submit.prevent="submit">
-            <div>
-                <InputLabel for="email" value="Email" />
+        <template #title>
+            <div class="text-center">
+                Reset password
+            </div>
+        </template>
 
-                <TextInput
+        <template #subtitle>
+            <div class="text-center">
+                Please enter your new password below
+            </div>
+        </template>
+
+        <form
+            class="space-y-6 sm:space-y-8"
+            @submit.prevent="submit"
+        >
+            <div class="flex flex-col gap-2">
+                <label for="email">Email address</label>
+                <InputText
                     id="email"
+                    ref="email-input"
+                    v-model="resetPwForm.email"
+                    :invalid="Boolean(resetPwForm.errors?.email)"
                     type="email"
-                    class="mt-1 block w-full"
-                    v-model="form.email"
-                    required
-                    autofocus
                     autocomplete="username"
-                />
-
-                <InputError class="mt-2" :message="form.errors.email" />
-            </div>
-
-            <div class="mt-4">
-                <InputLabel for="password" value="Password" />
-
-                <TextInput
-                    id="password"
-                    type="password"
-                    class="mt-1 block w-full"
-                    v-model="form.password"
                     required
-                    autocomplete="new-password"
+                    fluid
                 />
-
-                <InputError class="mt-2" :message="form.errors.password" />
-            </div>
-
-            <div class="mt-4">
-                <InputLabel
-                    for="password_confirmation"
-                    value="Confirm Password"
-                />
-
-                <TextInput
-                    id="password_confirmation"
-                    type="password"
-                    class="mt-1 block w-full"
-                    v-model="form.password_confirmation"
-                    required
-                    autocomplete="new-password"
-                />
-
-                <InputError
-                    class="mt-2"
-                    :message="form.errors.password_confirmation"
-                />
-            </div>
-
-            <div class="mt-4 flex items-center justify-end">
-                <PrimaryButton
-                    :class="{ 'opacity-25': form.processing }"
-                    :disabled="form.processing"
+                <Message
+                    v-if="resetPwForm.errors?.email"
+                    severity="error"
+                    variant="simple"
+                    size="small"
                 >
-                    Reset Password
-                </PrimaryButton>
+                    {{ resetPwForm.errors?.email }}
+                </Message>
+            </div>
+
+            <div class="flex flex-col gap-2">
+                <label for="password">New password</label>
+                <Password
+                    v-model="resetPwForm.password"
+                    :invalid="Boolean(resetPwForm.errors?.password)"
+                    autocomplete="new-password"
+                    inputId="password"
+                    toggleMask
+                    required
+                    fluid
+                />
+                <Message
+                    v-if="resetPwForm.errors?.password"
+                    severity="error"
+                    variant="simple"
+                    size="small"
+                >
+                    {{ resetPwForm.errors?.password }}
+                </Message>
+            </div>
+
+            <div class="flex flex-col gap-2">
+                <label for="password-confirmation">Confirm new password</label>
+                <Password
+                    v-model="resetPwForm.password_confirmation"
+                    :invalid="Boolean(resetPwForm.errors?.password_confirmation)"
+                    :feedback="false"
+                    autocomplete="new-password"
+                    inputId="password-confirmation"
+                    toggleMask
+                    required
+                    fluid
+                />
+                <Message
+                    v-if="resetPwForm.errors?.password_confirmation"
+                    severity="error"
+                    variant="simple"
+                    size="small"
+                >
+                    {{ resetPwForm.errors?.password_confirmation }}
+                </Message>
+            </div>
+
+            <div>
+                <Button
+                    :loading="resetPwForm.processing"
+                    type="submit"
+                    label="Reset password"
+                    fluid
+                />
             </div>
         </form>
-    </GuestLayout>
+    </GuestAuthLayout>
 </template>

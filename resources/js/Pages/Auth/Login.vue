@@ -1,13 +1,9 @@
 <script setup>
-import Checkbox from '@/Components/Checkbox.vue';
-import GuestLayout from '@/Layouts/GuestLayout.vue';
-import InputError from '@/Components/InputError.vue';
-import InputLabel from '@/Components/InputLabel.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
-import TextInput from '@/Components/TextInput.vue';
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import { useTemplateRef, onMounted } from 'vue';
+import { useForm } from '@inertiajs/vue3';
+import GuestAuthLayout from '@/layouts/GuestAuthLayout.vue';
 
-defineProps({
+const props = defineProps({
     canResetPassword: {
         type: Boolean,
     },
@@ -16,85 +12,147 @@ defineProps({
     },
 });
 
-const form = useForm({
+const emailInput = useTemplateRef('email-input');
+
+const loginForm = useForm({
     email: '',
     password: '',
     remember: false,
 });
 
 const submit = () => {
-    form.post(route('login'), {
-        onFinish: () => form.reset('password'),
+    loginForm.post(route('login'), {
+        onFinish: () => loginForm.reset('password'),
     });
 };
+
+onMounted(() => {
+    emailInput.value.$el.focus();
+});
 </script>
 
 <template>
-    <GuestLayout>
-        <Head title="Log in" />
+    <GuestAuthLayout>
+        <InertiaHead title="Log in" />
 
-        <div v-if="status" class="mb-4 text-sm font-medium text-green-600">
-            {{ status }}
-        </div>
+        <template
+            v-if="props.status"
+            #message
+        >
+            <Message
+                severity="success"
+                :closable="false"
+                class="shadow-sm"
+            >
+                {{ props.status }}
+            </Message>
+        </template>
 
-        <form @submit.prevent="submit">
-            <div>
-                <InputLabel for="email" value="Email" />
+        <template #title>
+            <div class="text-center">
+                Log in to your account
+            </div>
+        </template>
 
-                <TextInput
+        <template #subtitle>
+            <div class="text-center">
+                Enter your email and password below to log in
+            </div>
+        </template>
+
+        <form
+            class="space-y-6 sm:space-y-8"
+            @submit.prevent="submit"
+        >
+            <div class="flex flex-col gap-2">
+                <label for="email">Email address</label>
+                <InputText
                     id="email"
+                    ref="email-input"
+                    v-model="loginForm.email"
+                    :invalid="Boolean(loginForm.errors?.email)"
                     type="email"
-                    class="mt-1 block w-full"
-                    v-model="form.email"
-                    required
-                    autofocus
                     autocomplete="username"
-                />
-
-                <InputError class="mt-2" :message="form.errors.email" />
-            </div>
-
-            <div class="mt-4">
-                <InputLabel for="password" value="Password" />
-
-                <TextInput
-                    id="password"
-                    type="password"
-                    class="mt-1 block w-full"
-                    v-model="form.password"
                     required
-                    autocomplete="current-password"
+                    fluid
                 />
-
-                <InputError class="mt-2" :message="form.errors.password" />
+                <Message
+                    v-if="loginForm.errors?.email"
+                    severity="error"
+                    variant="simple"
+                    size="small"
+                >
+                    {{ loginForm.errors?.email }}
+                </Message>
             </div>
 
-            <div class="mt-4 block">
-                <label class="flex items-center">
-                    <Checkbox name="remember" v-model:checked="form.remember" />
-                    <span class="ms-2 text-sm text-gray-600"
-                        >Remember me</span
+            <div class="flex flex-col gap-2">
+                <div class="flex items-center justify-between">
+                    <label for="password">Password</label>
+                    <InertiaLink
+                        v-if="props.canResetPassword"
+                        :href="route('password.request')"
                     >
-                </label>
+                        <Button
+                            class="p-0"
+                            variant="link"
+                            label="Forgot your password?"
+                        />
+                    </InertiaLink>
+                </div>
+                <Password
+                    v-model="loginForm.password"
+                    :invalid="Boolean(loginForm.errors?.password)"
+                    :feedback="false"
+                    autocomplete="current-password"
+                    inputId="password"
+                    toggleMask
+                    required
+                    fluid
+                />
+                <Message
+                    v-if="loginForm.errors?.password"
+                    severity="error"
+                    variant="simple"
+                    size="small"
+                >
+                    {{ loginForm.errors?.password }}
+                </Message>
             </div>
 
-            <div class="mt-4 flex items-center justify-end">
-                <Link
-                    v-if="canResetPassword"
-                    :href="route('password.request')"
-                    class="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                >
-                    Forgot your password?
-                </Link>
+            <div>
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <Checkbox
+                            v-model="loginForm.remember"
+                            class="mr-2"
+                            inputId="remember"
+                            :binary="true"
+                        />
+                        <label for="remember">Remember me</label>
+                    </div>
+                </div>
+            </div>
 
-                <PrimaryButton
-                    class="ms-4"
-                    :class="{ 'opacity-25': form.processing }"
-                    :disabled="form.processing"
-                >
-                    Log in
-                </PrimaryButton>
+            <div>
+                <Button
+                    :loading="loginForm.processing"
+                    type="submit"
+                    label="Log in"
+                    fluid
+                />
+            </div>
+
+            <div class="text-center">
+                <span class="text-muted-color mr-1">Don't have an account?</span>
+                <InertiaLink :href="route('register')">
+                    <Button
+                        class="p-0"
+                        variant="link"
+                        label="Sign up"
+                    />
+                </InertiaLink>
             </div>
         </form>
-    </GuestLayout>
+    </GuestAuthLayout>
 </template>

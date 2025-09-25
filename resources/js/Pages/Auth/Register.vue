@@ -1,113 +1,153 @@
 <script setup>
-import GuestLayout from '@/Layouts/GuestLayout.vue';
-import InputError from '@/Components/InputError.vue';
-import InputLabel from '@/Components/InputLabel.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
-import TextInput from '@/Components/TextInput.vue';
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import { useTemplateRef, onMounted } from 'vue';
+import { useForm } from '@inertiajs/vue3';
+import GuestAuthLayout from '@/layouts/GuestAuthLayout.vue';
 
-const form = useForm({
+const registerForm = useForm({
     name: '',
     email: '',
     password: '',
     password_confirmation: '',
 });
 
+const nameInput = useTemplateRef('name-input');
+
 const submit = () => {
-    form.post(route('register'), {
-        onFinish: () => form.reset('password', 'password_confirmation'),
+    registerForm.post(route('register'), {
+        onFinish: () => registerForm.reset('password', 'password_confirmation'),
     });
 };
+
+onMounted(() => {
+    nameInput.value.$el.focus();
+});
 </script>
 
 <template>
-    <GuestLayout>
-        <Head title="Register" />
+    <GuestAuthLayout>
+        <InertiaHead title="Register" />
 
-        <form @submit.prevent="submit">
-            <div>
-                <InputLabel for="name" value="Name" />
+        <template #title>
+            <div class="text-center">
+                Create an account
+            </div>
+        </template>
 
-                <TextInput
+        <template #subtitle>
+            <div class="text-center">
+                Enter your details below to create your account
+            </div>
+        </template>
+
+        <form
+            class="space-y-6 sm:space-y-8"
+            @submit.prevent="submit"
+        >
+            <div class="flex flex-col gap-2">
+                <label for="name">Name</label>
+                <InputText
                     id="name"
+                    ref="name-input"
+                    v-model="registerForm.name"
+                    :invalid="Boolean(registerForm.errors?.name)"
                     type="text"
-                    class="mt-1 block w-full"
-                    v-model="form.name"
-                    required
-                    autofocus
                     autocomplete="name"
+                    required
+                    fluid
                 />
-
-                <InputError class="mt-2" :message="form.errors.name" />
+                <Message
+                    v-if="registerForm.errors?.name"
+                    severity="error"
+                    variant="simple"
+                    size="small"
+                >
+                    {{ registerForm.errors?.name }}
+                </Message>
             </div>
 
-            <div class="mt-4">
-                <InputLabel for="email" value="Email" />
-
-                <TextInput
+            <div class="flex flex-col gap-2">
+                <label for="email">Email address</label>
+                <InputText
                     id="email"
+                    v-model="registerForm.email"
+                    :invalid="Boolean(registerForm.errors?.email)"
                     type="email"
-                    class="mt-1 block w-full"
-                    v-model="form.email"
-                    required
                     autocomplete="username"
-                />
-
-                <InputError class="mt-2" :message="form.errors.email" />
-            </div>
-
-            <div class="mt-4">
-                <InputLabel for="password" value="Password" />
-
-                <TextInput
-                    id="password"
-                    type="password"
-                    class="mt-1 block w-full"
-                    v-model="form.password"
                     required
-                    autocomplete="new-password"
+                    fluid
                 />
-
-                <InputError class="mt-2" :message="form.errors.password" />
+                <Message
+                    v-if="registerForm.errors?.email"
+                    severity="error"
+                    variant="simple"
+                    size="small"
+                >
+                    {{ registerForm.errors?.email }}
+                </Message>
             </div>
 
-            <div class="mt-4">
-                <InputLabel
-                    for="password_confirmation"
-                    value="Confirm Password"
-                />
-
-                <TextInput
-                    id="password_confirmation"
-                    type="password"
-                    class="mt-1 block w-full"
-                    v-model="form.password_confirmation"
+            <div class="flex flex-col gap-2">
+                <label for="password">Password</label>
+                <Password
+                    v-model="registerForm.password"
+                    :invalid="Boolean(registerForm.errors?.password)"
+                    autocomplete="new-password"
+                    inputId="password"
+                    toggleMask
                     required
-                    autocomplete="new-password"
+                    fluid
                 />
+                <Message
+                    v-if="registerForm.errors?.password"
+                    severity="error"
+                    variant="simple"
+                    size="small"
+                >
+                    {{ registerForm.errors?.password }}
+                </Message>
+            </div>
 
-                <InputError
-                    class="mt-2"
-                    :message="form.errors.password_confirmation"
+            <div class="flex flex-col gap-2">
+                <label for="password-confirmation">Confirm password</label>
+                <Password
+                    v-model="registerForm.password_confirmation"
+                    :invalid="Boolean(registerForm.errors?.password_confirmation)"
+                    :feedback="false"
+                    autocomplete="new-password"
+                    inputId="password-confirmation"
+                    toggleMask
+                    required
+                    fluid
+                />
+                <Message
+                    v-if="registerForm.errors?.password_confirmation"
+                    severity="error"
+                    variant="simple"
+                    size="small"
+                >
+                    {{ registerForm.errors?.password_confirmation }}
+                </Message>
+            </div>
+
+            <div>
+                <Button
+                    type="submit"
+                    :loading="registerForm.processing"
+                    label="Create account"
+                    fluid
                 />
             </div>
 
-            <div class="mt-4 flex items-center justify-end">
-                <Link
-                    :href="route('login')"
-                    class="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                >
-                    Already registered?
-                </Link>
-
-                <PrimaryButton
-                    class="ms-4"
-                    :class="{ 'opacity-25': form.processing }"
-                    :disabled="form.processing"
-                >
-                    Register
-                </PrimaryButton>
+            <div class="text-center">
+                <span class="text-muted-color mr-1">Already have an account?</span>
+                <InertiaLink :href="route('login')">
+                    <Button
+                        class="p-0"
+                        variant="link"
+                        label="Log in"
+                    />
+                </InertiaLink>
             </div>
         </form>
-    </GuestLayout>
+    </GuestAuthLayout>
 </template>
