@@ -3,9 +3,11 @@
 namespace App\Models;
 
 //use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Enums\UserRole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class User extends Authenticatable //implements MustVerifyEmail
 {
@@ -22,6 +24,7 @@ class User extends Authenticatable //implements MustVerifyEmail
         'name',
         'email',
         'password',
+        'role',
     ];
 
     /**
@@ -44,6 +47,40 @@ class User extends Authenticatable //implements MustVerifyEmail
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'role' => UserRole::class,
         ];
+    }
+
+    public function markets(): BelongsToMany
+    {
+        return $this->belongsToMany(Market::class, 'user_market');
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->role === UserRole::ADMIN;
+    }
+
+    public function isMarketUser(): bool
+    {
+        return $this->role === UserRole::MARKET_USER;
+    }
+
+    public function canAccessMarket(Market $market): bool
+    {
+        if ($this->isAdmin()) {
+            return true;
+        }
+
+        return $this->markets()->where('markets.id', $market->id)->exists();
+    }
+
+    public function getAccessibleMarketIds(): array
+    {
+        if ($this->isAdmin()) {
+            return Market::active()->pluck('id')->toArray();
+        }
+
+        return $this->markets()->active()->pluck('markets.id')->toArray();
     }
 }
