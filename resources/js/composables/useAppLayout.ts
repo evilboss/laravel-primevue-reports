@@ -1,6 +1,6 @@
 import { ref, computed, onMounted, onUnmounted, watchEffect } from 'vue';
 import { usePage, useForm } from '@inertiajs/vue3';
-import { LayoutGrid, House, Info, Settings, LogOut, ExternalLink, FileSearch, FolderGit2 } from 'lucide-vue-next';
+import { LayoutGrid, House, Info, Settings, LogOut, ExternalLink, FileSearch, FolderGit2, BarChart3 } from 'lucide-vue-next';
 import { MenuItem } from '@/types';
 
 export function useAppLayout() {
@@ -26,6 +26,12 @@ export function useAppLayout() {
             lucideIcon: LayoutGrid,
             route: route('dashboard'),
             active: currentRoute.value == 'dashboard',
+        },
+        {
+            label: 'Reports',
+            lucideIcon: BarChart3,
+            route: route('reports.index'),
+            active: currentRoute.value?.startsWith('reports.'),
         },
         {
             label: 'Resources',
